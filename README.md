@@ -1,0 +1,111 @@
+# keys.aswincloud.com
+
+Public SSH keys, served so a fresh machine can be set up with one command.
+Self-hosted equivalent of `github.com/<user>.keys`.
+
+    curl -fsSL keys.aswincloud.com/install | sh
+
+## Getting the keys
+
+    curl keys.aswincloud.com                          # print them
+    curl keys.aswincloud.com >> ~/.ssh/authorized_keys
+    wget -O- keys.aswincloud.com                      # print them
+    wget --content-disposition keys.aswincloud.com    # saves as ./authorized_keys
+
+**Plain `wget keys.aswincloud.com` writes `index.html`.** The response does set
+`Content-Disposition: filename="authorized_keys"`, but wget ignores that header
+unless `--content-disposition` is passed. Use `curl`, or `wget -O-`.
+
+`http://` works — the zone redirects to HTTPS and both clients follow it.
+
+## Routes
+
+| route | what it returns |
+|---|---|
+| `/` | the keys, `text/plain`, `authorized_keys` format |
+| `/fingerprints` | SHA256 fingerprints, same format as `ssh-keygen -lf` |
+| `/install` | POSIX-sh installer, idempotent |
+
+## `/install`
+
+Appends only keys that are not already present, matching on the base64 blob rather
+than the whole line — the same key with a different comment is the same key, and
+appending it again would be a second way in that you cannot see. Creates `~/.ssh`
+at 700 and `authorized_keys` at 600. Re-run it after adding a laptop; it tops the
+file up instead of duplicating it.
+
+It is `#!/bin/sh`, not bash: the machines this runs on first are often minimal
+images where `/bin/sh` is dash.
+
+## Adding or removing a key
+
+Edit `keys.txt` and deploy. That is the entire workflow — nothing else references
+the list.
+
+    vi keys.txt
+    npm run deploy
+    npm run check          # against production
+
+Keep the comment on each line. It is what makes the file auditable later: on the
+target machine you can `grep -v 'aswin@Aswin-Laptop' ~/.ssh/authorized_keys` to
+drop one machine. A key with no comment is a key you cannot retire with confidence.
+
+## What is deliberately not here
+
+`~/.ssh/authorized_keys` on the host holds ten keys. Five are served:
+
+| type | comment |
+|---|---|
+| ed25519 | `aswin@AswinPC` |
+| ed25519 | `aswin@Aswin-Laptop` |
+| ed25519 | `aswin@Aswins-MacBook-Air.local` |
+| ed25519 | `aswin@Aswin-Macbook-Pro` |
+| ed25519 | `mail@ubuntu` (this server) |
+
+Excluded on purpose:
+
+- `gh-actions-deploy`, `koyeb-tg-torrent-rename-bot` — service keys. Publishing them
+  under "my keys" invites pasting a CI credential onto a personal machine.
+- three unnamed `ecdsa-nistp256 @aswin` keys — unattributable, so not something to
+  hand to a new machine as trusted.
+- `the RSA-3072 key on that same MacBook Pro` (RSA-3072) — older and weaker than the ed25519 set.
+- the six keys on `github.com/Aswinmcw.keys` — GitHub strips comments, so all six
+  read `no comment` and none can be traced to a machine.
+
+## Why the keys are bundled, not fetched
+
+`keys.txt` is compiled into the Worker as a text module (the `Text` rule in
+`wrangler.jsonc`). There is no KV, no D1 and no origin fetch, so the endpoint cannot
+serve a stale, empty or half-written list — the three failure modes that matter when
+the output is being appended to `authorized_keys` on a machine you are about to
+depend on.
+
+The `/fingerprints` route computes fingerprints from the same bundled bytes rather
+than reading a second checked-in list, so the two can never disagree.
+
+## This endpoint is a trust anchor
+
+Whatever this returns becomes a login on every machine bootstrapped from it. That is
+why the list is a committed file rather than a live proxy of an upstream account:
+changing it requires a commit and a deploy, and shows up in `git log`.
+
+Public keys are safe to publish — that is what they are for. The only real
+disclosure is the comments, which name your machines and include a work email.
+
+Verify a fetch before trusting it on a machine that matters:
+
+    curl -s keys.aswincloud.com | ssh-keygen -lf -
+
+and compare against `/fingerprints` or a fingerprint you already hold.
+
+## Checks
+
+    npm run dev                              # wrangler dev
+    sh scripts/check.sh http://localhost:8787
+    sh scripts/check.sh                      # production
+
+`check.sh` pipes the response through `ssh-keygen -lf`, confirms `/fingerprints`
+agrees with `/`, and runs `/install` twice in a scratch `HOME` to prove it is
+idempotent and that the file modes come out at 600/700. The `ssh-keygen` step is the
+one that matters: a malformed line does not fail at fetch time, it fails later by
+breaking `sshd` on the machine you just set up.

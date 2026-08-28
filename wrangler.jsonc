@@ -1,0 +1,20 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "keys",
+  "main": "src/worker.ts",
+  "compatibility_date": "2026-07-01",
+
+  // AswinCloud account — the one that owns the aswincloud.com zone.
+  "account_id": "e38978124c8fdb38dc80c04cda318ab3",
+
+  "observability": { "enabled": true },
+
+  // custom_domain creates and manages the proxied DNS record for
+  // keys.aswincloud.com itself. No manual record in the dashboard.
+  "routes": [{ "pattern": "keys.aswincloud.com", "custom_domain": true }],
+
+  // keys.txt is imported by the Worker and bundled as a string. Without this rule
+  // the import fails at build time rather than at runtime, which is the good
+  // outcome — but it does mean this rule is load-bearing, not cosmetic.
+  "rules": [{ "type": "Text", "globs": ["**/*.txt"], "fallthrough": true }]
+}

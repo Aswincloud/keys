@@ -1,0 +1,9 @@
+# SSH public keys for Aswin — https://keys.aswincloud.com
+# Interactive login keys only. Service/CI keys are deliberately not here.
+# Add or remove a key by editing this file and deploying; nothing else to change.
+
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMcLcZVMPhiU6YLoN3xfNl89manlYMWSCnwWY+7n3V5B aswin@AswinPC
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDVPz7w9Rgaifdn2RHGqCIhMZTymQykeELX05SukoFce aswin@Aswin-Laptop
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBr/FJ38IKZnbdg4uHiJV4VLsZHRfGjxgqtTxKOs/gsK aswin@Aswins-MacBook-Air.local
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMnGSArNMqGiiZk70eV4N+eAdmdeZXunEQzBNZWZ2EQl aswin@Aswin-Macbook-Pro
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAJaSLTGyd/4Lz83y8TTowS3cPB8myW8cGG0/dKoYHvY mail@ubuntu

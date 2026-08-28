@@ -1,0 +1,16 @@
+{
+  "name": "aswincloud-keys",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "check": "sh scripts/check.sh",
+    "types": "wrangler types"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20260711.1",
+    "typescript": "^7.0.2",
+    "wrangler": "^4.103.0"
+  }
+}
