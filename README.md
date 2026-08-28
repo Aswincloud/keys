@@ -42,9 +42,13 @@ images where `/bin/sh` is dash.
 Edit `keys.txt` and deploy. That is the entire workflow — nothing else references
 the list.
 
-    vi keys.txt            # add: ssh-ed25519 AAAA... aswin@NewLaptop
+    vi keys.txt                     # add: ssh-ed25519 AAAA... aswin@NewLaptop
+    sh scripts/fingerprints.sh      # regenerate fingerprints.txt
     npm run deploy
-    npm run check          # verifies production
+    npm run check                   # verifies production
+
+Commit `keys.txt` and `fingerprints.txt` together — `validate.sh` refuses to build
+while they disagree.
 
 Or edit `keys.txt` on GitHub and let Workers Builds deploy it — useful precisely
 because this endpoint exists to set up *other* machines, and you may not be at the
@@ -74,6 +78,24 @@ The comment has no effect on authentication. An `authorized_keys` line is
 the SSH wire format inside it holds just the algorithm name and the raw public
 key, with no field for a comment. Renaming one changes nothing about who can log
 in; the fingerprint is identical.
+
+### Pinned fingerprints
+
+`fingerprints.txt` lists the SHA256 of every key in `keys.txt`, and `validate.sh`
+refuses to build if the two disagree.
+
+This exists because `ssh-keygen -l` validates *structure*, not authenticity. Flip a
+single bit in a key's material and the line still parses, still reports
+`256 ... (ED25519)`, and still passes every other check — only the fingerprint
+moves. A key corrupted that way would deploy, land in a new machine's
+`authorized_keys`, and silently not work, because no private key matches it. You
+would believe you had four ways into that box and have three.
+
+The pin also makes key changes reviewable. A reviewer skims past a 68-character
+base64 blob; a changed `SHA256:` line is legible. Any change to key material has to
+appear in `fingerprints.txt` in the same commit or the build fails.
+
+    sh scripts/fingerprints.sh      # after any change to keys.txt
 
 ### A bad key cannot be deployed
 
@@ -151,7 +173,8 @@ offline — no secrets, no Cloudflare token — so there is nothing to gate it o
 
 **Checks**
 
-- `validate.sh` — the same script the deploy runs, but now *before* merge
+- `validate.sh` — the same script the deploy runs, but now *before* merge,
+  including the pinned-fingerprint comparison
 - `check-readme.sh` — the README table must match `keys.txt`
 - `tsc --noEmit`
 - `wrangler deploy --dry-run` — config and bundling, without deploying

@@ -73,6 +73,35 @@ if [ -n "$dupes" ]; then
   fail=1
 fi
 
+# Pinned fingerprints. ssh-keygen -l above proved every line is STRUCTURALLY a
+# key; it cannot prove it is the RIGHT key. Flip one bit in the key material and
+# the line still parses, still reports 256-bit ED25519 and still passes — only the
+# fingerprint moves. A key corrupted that way would deploy, reach a new machine's
+# authorized_keys, and silently not work, because no private key matches it.
+#
+# Comparing against a checked-in list closes that, and also puts any change to key
+# material into the diff in a form a reviewer can actually read.
+FP=fingerprints.txt
+if [ ! -f "$FP" ]; then
+  echo "validate: $FP is missing — run: sh scripts/fingerprints.sh"
+  fail=1
+else
+  want=$(grep -v '^#' "$FP" | grep . | awk '{print $1"  "$2}' | sort)
+  got=$(ssh-keygen -lf "$F" 2>/dev/null | awk '{print $2"  "$3}' | sort)
+  if [ "$want" != "$got" ]; then
+    echo "validate: keys.txt and $FP disagree."
+    echo
+    echo "  pinned but not in keys.txt:"
+    printf '%s\n' "$want" | grep -vxF "$(printf '%s' "$got")" 2>/dev/null | grep . | sed 's/^/    /' || echo "    (none)"
+    echo "  in keys.txt but not pinned:"
+    printf '%s\n' "$got" | grep -vxF "$(printf '%s' "$want")" 2>/dev/null | grep . | sed 's/^/    /' || echo "    (none)"
+    echo
+    echo "  If the key change was intended:  sh scripts/fingerprints.sh"
+    echo "  and commit fingerprints.txt alongside keys.txt."
+    fail=1
+  fi
+fi
+
 if [ "$fail" != 0 ]; then
   echo
   echo "validate: FAILED — not deploying."

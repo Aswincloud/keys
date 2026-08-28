@@ -1,0 +1,15 @@
+# Fingerprints of every key in keys.txt. Generated -- do not hand-edit.
+# Regenerate with: sh scripts/fingerprints.sh
+#
+# These exist so a corrupted key cannot deploy. ssh-keygen -l validates
+# structure, not authenticity: flip one bit in the key material and it still
+# parses, still reports 256-bit ED25519, and still passes -- only the
+# fingerprint changes. Pinning them turns 'these look like keys' into 'these
+# are exactly the keys we intend'.
+
+SHA256:dxiyBcPf+pkSLO/WNrEYnGEKkXpu67jKaS47Ky8ECFs  aswin@AswinPC
+SHA256:SvP/8B22PR2Q4rCGcQmvF8yUsSGWBcIKAuCD+P6oYDg  aswin@Aswin-Laptop
+SHA256:cCz8aDx6zovq4vWWcEUEmRzkdf7LLgNbzM3BKUqpeJ4  aswin@Aswins-MacBook-Air.local
+SHA256:J0Xs4eAxSVzI/XhTmESrauM48xEMtFmN78GxEc0CkV4  aswin@Aswin-Macbook-Pro
+SHA256:ubg9S7gxhwKqTvmgRxS/SRIvfEo1ZayOa+FqfVl+qJ8  mail@ubuntu
+SHA256:gWAoI59eLhaNK6FGvQDobXNmxPZUCkf+HUNh329gZAg  aswin@truenas-host
