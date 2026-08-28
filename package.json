@@ -6,7 +6,8 @@
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
     "check": "sh scripts/check.sh",
-    "types": "wrangler types"
+    "types": "wrangler types",
+    "validate": "sh scripts/validate.sh"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20260711.1",

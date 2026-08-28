@@ -7,6 +7,12 @@
   // AswinCloud account — the one that owns the aswincloud.com zone.
   "account_id": "e38978124c8fdb38dc80c04cda318ab3",
 
+  // Runs before every bundle — `wrangler deploy`, `npm run deploy` and Workers
+  // Builds alike. Exits non-zero on a key that would not load, which aborts the
+  // deploy. Put here rather than in an npm predeploy hook so it cannot be
+  // bypassed by invoking wrangler directly.
+  "build": { "command": "sh scripts/validate.sh" },
+
   "observability": { "enabled": true },
 
   // custom_domain creates and manages the proxied DNS record for

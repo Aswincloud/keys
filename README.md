@@ -42,13 +42,45 @@ images where `/bin/sh` is dash.
 Edit `keys.txt` and deploy. That is the entire workflow — nothing else references
 the list.
 
-    vi keys.txt
+    vi keys.txt            # add: ssh-ed25519 AAAA... aswin@NewLaptop
     npm run deploy
-    npm run check          # against production
+    npm run check          # verifies production
+
+Or edit `keys.txt` on GitHub and let Workers Builds deploy it — useful precisely
+because this endpoint exists to set up *other* machines, and you may not be at the
+one holding the repo.
+
+Removing is the same: delete the line and deploy.
+
+Existing machines are unaffected by a deploy — their `authorized_keys` is already
+written. To push a new key out to machines already set up, re-run the installer
+there; it appends only what is missing:
+
+    curl -fsSL keys.aswincloud.com/install | sh
 
 Keep the comment on each line. It is what makes the file auditable later: on the
 target machine you can `grep -v 'aswin@Aswin-Laptop' ~/.ssh/authorized_keys` to
-drop one machine. A key with no comment is a key you cannot retire with confidence.
+drop one machine. A key with no comment is a key you cannot retire with confidence
+— which is why `validate.sh` rejects one.
+
+### A bad key cannot be deployed
+
+`scripts/validate.sh` runs as wrangler's `build.command`, so it fires on
+`wrangler deploy`, `npm run deploy` and inside Workers Builds. A non-zero exit
+aborts the deploy. It rejects:
+
+- a line that does not parse under `ssh-keygen -lf`
+- a line with no comment
+- duplicate key material (the same key twice under different comments — one way in,
+  listed twice, and `/install` would silently keep only the first)
+
+It is in `build.command` rather than an npm `predeploy` hook so it cannot be
+sidestepped by calling wrangler directly.
+
+This guard exists because the failure it prevents is silent and delayed. A truncated
+paste or an editor-wrapped line bundles and deploys without complaint, then surfaces
+when `sshd` on a brand-new machine rejects `authorized_keys` — the exact moment you
+have no other way in.
 
 ## What is deliberately not here
 
