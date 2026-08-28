@@ -58,10 +58,22 @@ there; it appends only what is missing:
 
     curl -fsSL keys.aswincloud.com/install | sh
 
-Keep the comment on each line. It is what makes the file auditable later: on the
-target machine you can `grep -v 'aswin@Aswin-Laptop' ~/.ssh/authorized_keys` to
-drop one machine. A key with no comment is a key you cannot retire with confidence
-— which is why `validate.sh` rejects one.
+Keep the comment on each line, and make it a **machine name, not an email**. Two
+separate reasons:
+
+- It is what makes the file auditable later: on the target machine you can
+  `grep -v 'aswin@Aswin-Laptop' ~/.ssh/authorized_keys` to drop one machine. An
+  email address does not tell you which laptop to retire. A key with no comment at
+  all is one you cannot retire with confidence — which is why `validate.sh`
+  rejects it.
+- This repo and the endpoint are public. A comment is published verbatim, so an
+  address put there is an address published.
+
+The comment has no effect on authentication. An `authorized_keys` line is
+`type base64-key [comment]`, and `sshd` compares only the base64 key material —
+the SSH wire format inside it holds just the algorithm name and the raw public
+key, with no field for a comment. Renaming one changes nothing about who can log
+in; the fingerprint is identical.
 
 ### A bad key cannot be deployed
 
@@ -84,7 +96,7 @@ have no other way in.
 
 ## What is deliberately not here
 
-`~/.ssh/authorized_keys` on the host holds ten keys. Five are served:
+`~/.ssh/authorized_keys` on the host holds ten keys. Six are served:
 
 | type | comment |
 |---|---|
@@ -93,6 +105,7 @@ have no other way in.
 | ed25519 | `aswin@Aswins-MacBook-Air.local` |
 | ed25519 | `aswin@Aswin-Macbook-Pro` |
 | ed25519 | `mail@ubuntu` (this server) |
+| ed25519 | `aswin@truenas-host` (the TrueNAS host this server runs on) |
 
 Excluded on purpose:
 
@@ -100,7 +113,7 @@ Excluded on purpose:
   under "my keys" invites pasting a CI credential onto a personal machine.
 - three unnamed `ecdsa-nistp256 @aswin` keys — unattributable, so not something to
   hand to a new machine as trusted.
-- `the RSA-3072 key on that same MacBook Pro` (RSA-3072) — older and weaker than the ed25519 set.
+- the RSA-3072 key on that same MacBook Pro — older and weaker than the ed25519 set.
 - the six keys on `github.com/Aswinmcw.keys` — GitHub strips comments, so all six
   read `no comment` and none can be traced to a machine.
 
