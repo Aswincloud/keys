@@ -1,8 +1,18 @@
 name: CI
 
-# Every push and every pull request. Everything here is offline — no secrets, no
-# Cloudflare token, no network beyond the npm registry — so there is nothing to
-# gate it on.
+# Pull requests, and pushes to main only.
+#
+# `push:` with no branch filter ran the whole suite twice on every pull request
+# commit — once for the push to the branch, once for the pull_request event — so
+# each PR showed two identical Checks and two identical E2E runs. Restricting the
+# push trigger to main leaves one run per PR commit, plus one on main after a
+# merge to verify the squashed result.
+#
+# The tradeoff: a branch pushed with no PR open gets no CI. That is the right way
+# round here, because main is protected and nothing reaches it without a PR.
+#
+# Everything is offline — no secrets, no Cloudflare token, no network beyond the
+# npm registry — so there is nothing to gate it on.
 #
 # This exists because validate.sh previously ran only at deploy time, which is
 # after merge. A malformed keys.txt would land on main and be discovered from a
@@ -10,6 +20,7 @@ name: CI
 # but main was, and the whole point of the file is that it can be trusted.
 on:
   push:
+    branches: [main]
   pull_request:
 
 # Read-only. This workflow reports; it must never be able to change anything.
