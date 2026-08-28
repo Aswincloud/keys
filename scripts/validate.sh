@@ -35,7 +35,31 @@ while IFS= read -r line || [ -n "$line" ]; do
   if [ "$fields" -lt 3 ]; then
     echo "validate: line $n has no comment — add one so it can be identified later"
     fail=1
+    continue
   fi
+
+  # Is the comment an email address? This repo and the endpoint are both public,
+  # so a comment is published verbatim. A work address was committed here once and
+  # took a history rewrite and a repo re-create to remove; this is the guard that
+  # stops it happening twice.
+  #
+  # A bare host with no dot (AswinPC, ubuntu, truenas-host) is a machine name and
+  # fine. A dotted host is only fine if it is a non-routable local suffix, which
+  # is what a Mac's Bonjour name looks like (Aswins-MacBook-Air.local).
+  comment=$(printf '%s' "$line" | awk '{print $3}')
+  case "$comment" in
+    *@*)
+      host=${comment#*@}
+      case "$host" in
+        *.local|*.lan|*.internal|*.home|*.arpa) : ;;
+        *.*)
+          echo "validate: line $n comment '$comment' looks like an email address."
+          echo "           Comments are published verbatim — use a machine name."
+          fail=1
+          ;;
+      esac
+      ;;
+  esac
 done < "$F"
 
 [ "$n" -gt 0 ] || { echo "validate: $F has no keys"; exit 1; }

@@ -96,7 +96,8 @@ have no other way in.
 
 ## What is deliberately not here
 
-`~/.ssh/authorized_keys` on the host holds ten keys. Six are served:
+`~/.ssh/authorized_keys` on the host holds more keys than this. These are served
+(the table is checked against `keys.txt` in CI, so it cannot drift):
 
 | type | comment |
 |---|---|
@@ -142,6 +143,27 @@ Verify a fetch before trusting it on a machine that matters:
     curl -s keys.aswincloud.com | ssh-keygen -lf -
 
 and compare against `/fingerprints` or a fingerprint you already hold.
+
+## CI
+
+`.github/workflows/ci.yml` runs on every push and pull request. Everything in it is
+offline — no secrets, no Cloudflare token — so there is nothing to gate it on.
+
+**Checks**
+
+- `validate.sh` — the same script the deploy runs, but now *before* merge
+- `check-readme.sh` — the README table must match `keys.txt`
+- `tsc --noEmit`
+- `wrangler deploy --dry-run` — config and bundling, without deploying
+
+**E2E** — boots `wrangler dev` and runs `check.sh` against it: every line through
+`ssh-keygen -lf`, `/fingerprints` against `/`, and `/install` twice in a scratch
+`HOME` to prove idempotency and 600/700 modes.
+
+`validate.sh` used to run only at deploy time, which is after merge. A malformed
+`keys.txt` would land on `main` and be found in a build log. Production was never at
+risk — a failed build does not deploy — but `main` was, and this file only has value
+if it can be trusted.
 
 ## Checks
 

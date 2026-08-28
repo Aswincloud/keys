@@ -1,0 +1,93 @@
+name: CI
+
+# Every push and every pull request. Everything here is offline — no secrets, no
+# Cloudflare token, no network beyond the npm registry — so there is nothing to
+# gate it on.
+#
+# This exists because validate.sh previously ran only at deploy time, which is
+# after merge. A malformed keys.txt would land on main and be discovered from a
+# failed build log. Production was never at risk (a failed build does not deploy)
+# but main was, and the whole point of the file is that it can be trusted.
+on:
+  push:
+  pull_request:
+
+# Read-only. This workflow reports; it must never be able to change anything.
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    name: Checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      # `ci` rather than `install`: installs exactly the lockfile and fails if it
+      # has drifted from package.json. --ignore-scripts because nothing here needs
+      # an install hook and this job checks out pull request code; wrangler's
+      # workerd binary arrives via an optional dependency, not a postinstall.
+      - run: npm ci --ignore-scripts
+
+      # The keys themselves: parseable, commented, no duplicates, no email
+      # addresses in comments.
+      - name: Validate keys.txt
+        run: sh scripts/validate.sh
+
+      # The README table documents a public endpoint. Wrong is worse than absent.
+      - name: README table matches keys.txt
+        run: ./scripts/check-readme.sh
+
+      - name: Typecheck
+        run: npx tsc --noEmit
+
+      # Catches config and bundling breakage — e.g. the "Text" rule regressing so
+      # keys.txt stops being importable — without deploying anything.
+      - name: Build (dry run)
+        run: npx wrangler deploy --dry-run --outdir /tmp/dryrun
+
+  e2e:
+    name: E2E
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci --ignore-scripts
+
+      - name: Start wrangler dev
+        run: |
+          npx wrangler dev --port 8787 > /tmp/dev.log 2>&1 &
+          for i in $(seq 1 60); do
+            curl -fsS -o /dev/null http://localhost:8787/ && exit 0
+            sleep 1
+          done
+          echo "dev server never came up:"; cat /tmp/dev.log; exit 1
+
+      # Exercises the served output the way a machine being set up would:
+      # every line through ssh-keygen, /fingerprints against /, and /install run
+      # twice in a scratch HOME to prove idempotency and 600/700 file modes.
+      #
+      # /install is generated inside a TypeScript template literal, so no shell
+      # linter can see it. Running it is the only check that means anything.
+      - name: Endpoint checks
+        run: sh scripts/check.sh http://localhost:8787
+
+      - name: Dev server log
+        if: failure()
+        run: cat /tmp/dev.log
