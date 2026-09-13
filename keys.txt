@@ -2,9 +2,15 @@
 # Interactive login keys only. Service/CI keys are deliberately not here.
 # Add or remove a key by editing this file and deploying; nothing else to change.
 
+# AswinPC desktop key
 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMcLcZVMPhiU6YLoN3xfNl89manlYMWSCnwWY+7n3V5B aswin@AswinPC
+# Aswin laptop key
 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDVPz7w9Rgaifdn2RHGqCIhMZTymQykeELX05SukoFce aswin@Aswin-Laptop
+# MacBook Air key
 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBr/FJ38IKZnbdg4uHiJV4VLsZHRfGjxgqtTxKOs/gsK aswin@Aswins-MacBook-Air.local
+# MacBook Pro key
 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMnGSArNMqGiiZk70eV4N+eAdmdeZXunEQzBNZWZ2EQl aswin@Aswin-Macbook-Pro
+# Ubuntu mail server key
 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAJaSLTGyd/4Lz83y8TTowS3cPB8myW8cGG0/dKoYHvY mail@ubuntu
+# TrueNAS host key
 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEcARDPvHkGsw/nF8ABQ/PmkT6S5UTYKp3XiJSvz89/e aswin@truenas-host
