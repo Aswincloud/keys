@@ -3,14 +3,14 @@
 Public SSH keys, served so a fresh machine can be set up with one command.
 Self-hosted equivalent of `github.com/<user>.keys`.
 
-    curl -fsSL keys.aswincloud.com/install | sh
+    curl --proto '=https' --tlsv1.2 -fsSL https://keys.aswincloud.com/install | sh
 
 ## Getting the keys
 
-    curl keys.aswincloud.com                          # print them
-    curl keys.aswincloud.com >> ~/.ssh/authorized_keys
-    wget -O- keys.aswincloud.com                      # print them
-    wget --content-disposition keys.aswincloud.com    # saves as ./authorized_keys
+    curl --proto '=https' --tlsv1.2 https://keys.aswincloud.com       # print them
+    curl --proto '=https' --tlsv1.2 https://keys.aswincloud.com >> ~/.ssh/authorized_keys
+    wget -O- https://keys.aswincloud.com                               # print them
+    wget --content-disposition https://keys.aswincloud.com             # saves as ./authorized_keys
 
 **Plain `wget keys.aswincloud.com` writes `index.html`.** The response does set
 `Content-Disposition: filename="authorized_keys"`, but wget ignores that header
@@ -60,7 +60,7 @@ Existing machines are unaffected by a deploy — their `authorized_keys` is alre
 written. To push a new key out to machines already set up, re-run the installer
 there; it appends only what is missing:
 
-    curl -fsSL keys.aswincloud.com/install | sh
+    curl --proto '=https' --tlsv1.2 -fsSL https://keys.aswincloud.com/install | sh
 
 Keep the comment on each line, and make it a **machine name, not an email**. Two
 separate reasons:

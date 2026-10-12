@@ -29,9 +29,10 @@ if [ "$a" = "$b" ]; then echo "  OK"; else echo "  FAIL: mismatch"; fail=1; fi
 
 echo "== $BASE/install is idempotent =="
 tmp=$(mktemp -d)
-HOME="$tmp" sh -c "curl -fsSL '$BASE/install' | sh" >/dev/null
+trap 'rm -rf "$tmp"' EXIT
+curl -fsSL "$BASE/install" | HOME="$tmp" sh >/dev/null
 first=$(grep -c . "$tmp/.ssh/authorized_keys")
-HOME="$tmp" sh -c "curl -fsSL '$BASE/install' | sh" >/dev/null
+curl -fsSL "$BASE/install" | HOME="$tmp" sh >/dev/null
 second=$(grep -c . "$tmp/.ssh/authorized_keys")
 perm=$(stat -c '%a' "$tmp/.ssh/authorized_keys")
 dperm=$(stat -c '%a' "$tmp/.ssh")
@@ -39,7 +40,5 @@ echo "  run1=$first run2=$second  authorized_keys=$perm .ssh=$dperm"
 [ "$first" = "$second" ] || { echo "  FAIL: not idempotent"; fail=1; }
 [ "$perm" = "600" ] || { echo "  FAIL: authorized_keys should be 600"; fail=1; }
 [ "$dperm" = "700" ] || { echo "  FAIL: .ssh should be 700"; fail=1; }
-rm -rf "$tmp"
-
 echo
 [ "$fail" = 0 ] && echo "ALL CHECKS PASSED" || { echo "CHECKS FAILED"; exit 1; }
