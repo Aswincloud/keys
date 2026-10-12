@@ -12,7 +12,7 @@ Self-hosted equivalent of `github.com/<user>.keys`.
     wget -O- https://keys.aswincloud.com                               # print them
     wget --content-disposition https://keys.aswincloud.com             # saves as ./authorized_keys
 
-**Plain `wget keys.aswincloud.com` writes `index.html`.** The response does set
+**Plain `wget https://keys.aswincloud.com` writes `index.html`.** The response does set
 `Content-Disposition: filename="authorized_keys"`, but wget ignores that header
 unless `--content-disposition` is passed. Use `curl`, or `wget -O-`.
 
@@ -162,7 +162,7 @@ disclosure is the comments, which name your machines and include a work email.
 
 Verify a fetch before trusting it on a machine that matters:
 
-    curl -s keys.aswincloud.com | ssh-keygen -lf -
+    curl --proto '=https' --tlsv1.2 -s https://keys.aswincloud.com | ssh-keygen -lf -
 
 and compare against `/fingerprints` or a fingerprint you already hold.
 
